@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include <main.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <iostream>
 #include "stdint.h"
@@ -136,8 +135,6 @@ int main(void)
   MX_LPUART1_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t totransmit = 'a';
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -147,13 +144,9 @@ int main(void)
 	  uint8_t rx_buffer[1000];
 	  HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
 	  HAL_Delay(1000);
-	  HAL_UART_Transmit(&hlpuart1, &totransmit, 1, HAL_MAX_DELAY);
-	  //printf("Hello");
-
-
 	  Autopilot_Interface autopilot_interface;
 	  autopilot_interface.start();
-	  //Commands(autopilot_interface, autotakeoff);
+	  Commands(autopilot_interface, autotakeoff);
 //	  HAL_UART_Receive(&huart1,rx_buffer,8,HAL_MAX_DELAY);
 //	  for (int i=0; i<1000; i++)
 //	  {
@@ -253,9 +246,7 @@ static void MX_LPUART1_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN LPUART1_Init 2 */
-
   /* USER CODE END LPUART1_Init 2 */
-
 }
 
 /**
@@ -372,26 +363,21 @@ static void MX_GPIO_Init(void)
 
 void Autopilot_Interface::start()
 {
-//	  uint8_t rx_buffer[1000];
-//	  HAL_UART_Receive(&huart1,rx_buffer,8,10);
-//	  for (int i=0; i<1000; i++)
-//	  {
-//	  	HAL_UART_Transmit(&hlpuart1, &rx_buffer[i], 1, HAL_MAX_DELAY);
-//	  }
 	Autopilot_Interface::write_thread();
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Commands Entered"), 16, HAL_MAX_DELAY);
 	Autopilot_Interface::read_thread();
-	//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Found"), 100, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Found"), 5, HAL_MAX_DELAY);
 	if (not system_id)
 	{
 		system_id = current_messages.sysid;
-		//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("GOT VEHICLE SYSTEM ID:"), 100, HAL_MAX_DELAY);
-		//HAL_UART_Transmit(&hlpuart1, (uint8_t*)(system_id), 100, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("GOT VEHICLE SYSTEM ID:"), 22, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)(system_id), 100, HAL_MAX_DELAY);
 	}
 	if (not autopilot_id)
 	{
 		autopilot_id = current_messages.compid;
-		//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("GOT AUTOPILOT COMPONENT ID:"), 100, HAL_MAX_DELAY);
-		//HAL_UART_Transmit(&hlpuart1, (uint8_t*)(autopilot_id), 100, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("GOT AUTOPILOT COMPONENT ID:"), 27, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)(autopilot_id), 100, HAL_MAX_DELAY);
 	}
 	Mavlink_Messages local_data = current_messages;
 	initial_position.x        = local_data.control.x;
@@ -421,28 +407,23 @@ void Autopilot_Interface::start()
 	uint8_t tx_buffer3[sizeof(float)];
 	memcpy(tx_buffer3, &float_value3, sizeof(float));
 
-	//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("INITIAL POSITION XYZ:"), 100, HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&hlpuart1, tx_buffer, sizeof(float), HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&hlpuart1, tx_buffer1, sizeof(float), HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&hlpuart1, tx_buffer2, sizeof(float), HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&hlpuart1, tx_buffer3, sizeof(float), HAL_MAX_DELAY);
-//	printf("INITIAL POSITION XYZ = [ %.4f , %.4f , %.4f ] \n", initial_position.x, initial_position.y, initial_position.z);
-//	printf("INITIAL POSITION YAW = %.4f \n", initial_position.yaw);
-	//HAL_UART_Transmit(&hlpuart1, &totransmit1, 1, HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Commands Entered"),100, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("INITIAL POSITION XYZ:"), 24, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer, sizeof(float), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer1, sizeof(float), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer2, sizeof(float), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer3, sizeof(float), HAL_MAX_DELAY);
 }
 
 void Commands(Autopilot_Interface &api, bool autotakeoff)
 {
-	//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Commands Entered"),100, HAL_MAX_DELAY);
 	api.enable_offboard_control();
 	//usleep(100);
 	if(autotakeoff)
 	{
 		api.arm_disarm(true);
-		//HAL_Delay(10);
+		HAL_Delay(10);
 	}
-	//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Send Offboard Commands\n"),100, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Send Offboard Commands\n"),24, HAL_MAX_DELAY);
 	mavlink_set_position_target_local_ned_t sp;
 	mavlink_set_position_target_local_ned_t ip = api.initial_position;
 	api.set_position(ip.x, ip.y, ip.z, sp);
@@ -456,34 +437,90 @@ void Commands(Autopilot_Interface &api, bool autotakeoff)
 	while (true)
 	{
 		mavlink_local_position_ned_t pos = api.current_messages.local_position_ned;
-//		printf("CURRENT POSITION XYZ = [ % .4f , % .4f , % .4f ] \n", pos.x, pos.y, pos.z);
-//		Mavlink_Messages messages = api.current_messages;
-//	    printf("Position  (NED):  %f %f %f (m)\n", pos.x, pos.y, pos.z );
-//	    mavlink_attitude_t attitude = messages.attitude;
-//	    mavlink_get_attitude_battery_t custom = messages.custom;
-//	    mavlink_battery_status_t battery_status = messages.battery_status;
-//	    custom.roll=attitude.roll;
-//	    custom.pitch=attitude.pitch;
-//	    custom.yaw=attitude.yaw;
-//	    custom.current_battery= battery_status.current_battery;
-//	    custom.energy_consumed= battery_status.energy_consumed;
-//	    custom.battery_remaining= battery_status.battery_remaining;
-//	    printf("Time (Since Boot):%lu \n", custom.time_boot_ms);
-//        printf("Roll: %f (rad)\n", custom.roll);
-//        printf("Yaw: %f (rad)\n", custom.yaw);
-//        printf("Pitch: %f (rad)\n", custom.pitch);
-//        printf("Current Battery: %d (cA)\n",custom.current_battery);
-//        printf("Energy Consumed: %d (hJ)\n",custom.energy_consumed);
-//        printf("Battery Remaining: %d (%)\n",custom.battery_remaining);
-//        printf("\n");
-	    //HAL_Delay(100);
+
+		float float_value4 = pos.x;
+		uint8_t tx_buffer4[sizeof(float)];
+		memcpy(tx_buffer4, &float_value4, sizeof(float));
+
+		float float_value5 = pos.y;
+		uint8_t tx_buffer5[sizeof(float)];
+		memcpy(tx_buffer5, &float_value5, sizeof(float));
+
+		float float_value6 = pos.z;
+		uint8_t tx_buffer6[sizeof(float)];
+		memcpy(tx_buffer6, &float_value6, sizeof(float));
+
+		HAL_UART_Transmit(&hlpuart1, tx_buffer4, sizeof(float), HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, tx_buffer5, sizeof(float), HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, tx_buffer6, sizeof(float), HAL_MAX_DELAY);
+
+		Mavlink_Messages messages = api.current_messages;
+	    mavlink_attitude_t attitude = messages.attitude;
+	    mavlink_get_attitude_battery_t custom = messages.custom;
+	    mavlink_battery_status_t battery_status = messages.battery_status;
+	    custom.roll=attitude.roll;
+	    custom.pitch=attitude.pitch;
+	    custom.yaw=attitude.yaw;
+	    custom.current_battery= battery_status.current_battery;
+	    custom.energy_consumed= battery_status.energy_consumed;
+	    custom.battery_remaining= battery_status.battery_remaining;
+
+	    float float_value7 = custom.time_boot_ms;
+	    uint8_t tx_buffer7[sizeof(float)];
+	    memcpy(tx_buffer7, &float_value7, sizeof(float));
+
+	    float float_value8 = custom.roll;
+	    uint8_t tx_buffer8[sizeof(float)];
+	    memcpy(tx_buffer8, &float_value8, sizeof(float));
+
+	    float float_value9 = custom.yaw;
+	    uint8_t tx_buffer9[sizeof(float)];
+	    memcpy(tx_buffer9, &float_value9, sizeof(float));
+
+	    float float_value10 = custom.pitch;
+	    uint8_t tx_buffer10[sizeof(float)];
+	    memcpy(tx_buffer10, &float_value10, sizeof(float));
+
+	    float float_value11 = custom.current_battery;
+	    uint8_t tx_buffer11[sizeof(float)];
+	    memcpy(tx_buffer11, &float_value11, sizeof(float));
+
+	    float float_value13 = custom.energy_consumed;
+	    uint8_t tx_buffer13[sizeof(float)];
+	    memcpy(tx_buffer13, &float_value13, sizeof(float));
+
+	    float float_value14 = custom.battery_remaining;
+	    uint8_t tx_buffer14[sizeof(float)];
+	    memcpy(tx_buffer14, &float_value14, sizeof(float));
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Time (Since Boot):"), 18, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer7, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Roll:"), 5, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer8, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Yaw:"), 4, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer9, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Pitch:"), 6, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer10, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Current Battery:"), 16, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer11, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Energy Consumed:"), 18, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer13, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Battery Remaining:"), 19, HAL_MAX_DELAY);
+	    HAL_UART_Transmit(&hlpuart1, tx_buffer14, sizeof(float), HAL_MAX_DELAY);
+
+	    HAL_Delay(100);
 	}
 	api.arm_disarm(false);
 }
 
 void Autopilot_Interface::write_thread(void)
 {
-	//writing_status = 2;
 	mavlink_set_position_target_local_ned_t sp;
 	sp.type_mask = (MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_VELOCITY & MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_YAW_RATE & MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_ROLL & MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_PITCH);
 	sp.coordinate_frame = MAV_FRAME_LOCAL_NED;
@@ -510,11 +547,6 @@ int Autopilot_Interface::write_message(mavlink_message_t &message)
 	char buf[MAVLINK_MAX_PACKET_LEN];
 	unsigned len = mavlink_msg_to_send_buffer((uint8_t*)buf, &message);
 	HAL_UART_Transmit(&huart1, (uint8_t *)&buf, len, HAL_MAX_DELAY);
-//	HAL_UART_Transmit(&hlpuart1, (uint8_t *)&buf, len, HAL_MAX_DELAY);
-//	uint8_t totransmit1[] = {'q'};
-//	HAL_UART_Transmit(&hlpuart1, totransmit1, 1, HAL_MAX_DELAY);
-//	uint8_t totransmit1[]={'r'};
-//					HAL_UART_Transmit(&hlpuart1, totransmit1, 1, HAL_MAX_DELAY);
 	return len;
 }
 void Autopilot_Interface::write_setpoint()
@@ -536,36 +568,32 @@ void Autopilot_Interface::enable_offboard_control()
 	if ( control_status == false )
 	{
 		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("ENABLE OFFBOARD MODE"), 20, HAL_MAX_DELAY);
-		//printf("ENABLE OFFBOARD MODE\n");
 		int success = Autopilot_Interface::toggle_offboard_control( true );
 		if ( success )
 			control_status = true;
 		else
 		{
 			HAL_UART_Transmit(&hlpuart1, (uint8_t*)(stderr), 100, HAL_MAX_DELAY);
-			HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Error: off-board mode not set, could not write message\n"),53 , HAL_MAX_DELAY);
-			//fprintf(stderr,"Error: off-board mode not set, could not write message\n");
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Error: off-board mode not set, could not write message\n"), 53, HAL_MAX_DELAY);
 		}
-		printf("\n");
 	}
 }
 void Autopilot_Interface::disable_offboard_control()
 {
     if ( control_status == true )
 	{
-		printf("DISABLE OFFBOARD MODE\n");
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("DISABLE OFFBOARD MODE\n"), 22, HAL_MAX_DELAY);
 		int success = Autopilot_Interface::toggle_offboard_control( false );
 		if ( success )
 			control_status = false;
 		else
 		{
-			fprintf(stderr,"Error: off-board mode not set, could not write message\n");
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Error: off-board mode not set, could not write message\n"), 53, HAL_MAX_DELAY);
 		}
-		printf("\n");
 	}
 	else
 	{
-		printf("Cannot Enter");
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Cannot Enter\n"), 14, HAL_MAX_DELAY);
 	}
 
 }
@@ -574,12 +602,10 @@ int Autopilot_Interface::arm_disarm( bool flag )
 	if(flag)
 	{
 		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("ARM MOTORS"), 10, HAL_MAX_DELAY);
-		//printf("ARM ROTORS\n");
 	}
 	else
 	{
 		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("DISARM MOTORS"), 10, HAL_MAX_DELAY);
-		//printf("DISARM ROTORS\n");
 	}
 	mavlink_command_long_t com = { 0 };
 	com.target_system    = system_id;
@@ -597,7 +623,7 @@ int Autopilot_Interface::move_control(uint16_t x, uint16_t y, uint16_t z, uint16
 {
 	if(flag)
 	{
-		printf("MANUAL CONTROL ENABLED\n");
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("MANUAL CONTROL ENABLED\n"), 24, HAL_MAX_DELAY);
 		mavlink_command_long_t com = {0};
 	    com.target_system    = system_id;
 	    com.target_component = autopilot_id;
@@ -654,11 +680,9 @@ void Autopilot_Interface::read_thread()
 
 	while (!reading_status)
 	{
-//		uint8_t totransmit1[] = {'q'};
-//		HAL_UART_Transmit(&hlpuart1, totransmit1, 1, HAL_MAX_DELAY);
+
 		Autopilot_Interface::read_messages();
 		HAL_Delay(100); // Read batches at 10Hz
-		//time_to_exit=true;
 		reading_status = true;
 	}
 	return;
@@ -670,26 +694,9 @@ int Autopilot_Interface::read_message(mavlink_message_t &message)
 	    uint8_t receive_buffer[MAVLINK_MAX_PACKET_LEN];
 		mavlink_status_t status;
 		uint8_t msgReceived = false;
-//		uint8_t rx_buffer[1000];
-//		HAL_UART_Receive(&huart1,rx_buffer,8,HAL_MAX_DELAY);
-//		for (int i=0; i<1000; i++)
-//		{
-//			HAL_UART_Transmit(&hlpuart1, &rx_buffer[i], 1, HAL_MAX_DELAY);
-//		}
-	    //uint8_t rx_buffer;
-		int bytesReceived=HAL_UART_Receive(&huart1,receive_buffer,sizeof(receive_buffer),HAL_MAX_DELAY);
-//		HAL_UART_Receive_IT(&huart1, cp, sizeof(cp));
-		//HAL_UART_Transmit(&hlpuart1, cp, 1000, HAL_MAX_DELAY);
-//		    // Data received successfully, proceed to transmit
-//		    uint8_t totransmit1[] = {'q'};
-//		    HAL_UART_Transmit(&hlpuart1, totransmit1, 1, HAL_MAX_DELAY);
-//		} else {
-//			HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Error"), 8, HAL_MAX_DELAY);
-
+		int bytesReceived=HAL_UART_Receive(&huart1,receive_buffer,MAVLINK_MAX_PACKET_LEN,HAL_MAX_DELAY);
 		uint8_t totransmit1[] = {'q'};
 		HAL_UART_Transmit(&hlpuart1, totransmit1, 1, HAL_MAX_DELAY);
-		//int result = _read_port(cp);
-//		msgReceived = mavlink_parse_char(MAVLINK_COMM_1, receive_buffer, &message, &status);
 		for (int i = 0; i < MAVLINK_MAX_PACKET_LEN; i++)
 		    {
 		        msgReceived = mavlink_parse_char(MAVLINK_COMM_1, receive_buffer[i], &message, &status);
@@ -698,22 +705,20 @@ int Autopilot_Interface::read_message(mavlink_message_t &message)
 		            break;  // Exit loop if a message is successfully parsed
 		        }
 		    }
-		const char* str = msgReceived ? "True" : "False";
-		HAL_UART_Transmit(&hlpuart1, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
 		//HAL_UART_Transmit(&hlpuart1, &(msgReceived), 10, HAL_MAX_DELAY);
 		if ( (lastStatus.packet_rx_drop_count != status.packet_rx_drop_count) && debug )
 		{
-			//HAL_UART_Transmit(&hlpuart1, (uint8_t*)"Error: DROPPED PACKETS", 23, HAL_MAX_DELAY);
-			//HAL_UART_Transmit(&hlpuart1, (uint8_t*)(status.packet_rx_drop_count), 20, HAL_MAX_DELAY);
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)"Error: DROPPED PACKETS", 23, HAL_MAX_DELAY);
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)(status.packet_rx_drop_count), 20, HAL_MAX_DELAY);
 		}
 			lastStatus = status;
 		if(msgReceived && debug)
 		{
 			// Report info
-			//HAL_UART_Transmit(&hlpuart1, (uint8_t*)"Received message from serial with ID", 36, HAL_MAX_DELAY);
-			//HAL_UART_Transmit(&hlpuart1, (uint8_t*)(message.msgid), 20, HAL_MAX_DELAY);
-			//HAL_UART_Transmit(&hlpuart1, (uint8_t*)(message.sysid), 20, HAL_MAX_DELAY);
-			//HAL_UART_Transmit(&hlpuart1, (uint8_t*)(message.compid), 20, HAL_MAX_DELAY);
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)"Received message from serial with ID", 36, HAL_MAX_DELAY);
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)(message.msgid), MAVLINK_MAX_PACKET_LEN, HAL_MAX_DELAY);
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)(message.sysid), MAVLINK_MAX_PACKET_LEN, HAL_MAX_DELAY);
+			HAL_UART_Transmit(&hlpuart1, (uint8_t*)(message.compid), MAVLINK_MAX_PACKET_LEN, HAL_MAX_DELAY);
 
 			//fprintf(stderr,"Received serial data: ");
 			unsigned int i;
@@ -721,7 +726,7 @@ int Autopilot_Interface::read_message(mavlink_message_t &message)
 			unsigned int messageLength = mavlink_msg_to_send_buffer(buffer, &message);
 			if (messageLength > MAVLINK_MAX_PACKET_LEN)
 			{
-				//HAL_UART_Transmit(&hlpuart1, (uint8_t*)"FATAL ERROR: MESSAGE LENGTH IS LARGER THAN BUFFER SIZE", 54, HAL_MAX_DELAY);
+				HAL_UART_Transmit(&hlpuart1, (uint8_t*)"FATAL ERROR: MESSAGE LENGTH IS LARGER THAN BUFFER SIZE", 54, HAL_MAX_DELAY);
 			}
 			else
 			{
@@ -745,16 +750,7 @@ void Autopilot_Interface::read_messages()
 	while (!(received_all) and (!reading_status) )
 	{
 	    mavlink_message_t message;
-//	    uint8_t rx_buffer[1000];
-//	    uint8_t*cp;
-//	    mavlink_status_t status;
-//	    uint8_t msgReceived = false;
-//	    HAL_UART_Receive(&huart1,cp,8,10000);
-//	    msgReceived = mavlink_parse_char(MAVLINK_COMM_1, *cp, &message, &status);
-//	    success=msgReceived;
 		success = Autopilot_Interface::read_message(message);
-//		const char* str = success ? "True" : "False";
-//		HAL_UART_Transmit(&hlpuart1, (uint8_t*)str, strlen(str), HAL_MAX_DELAY);
 	    if (success==true)
 	    {
 	        current_messages.sysid  = message.sysid;
@@ -880,10 +876,9 @@ void Autopilot_Interface::read_messages()
 
 		if (writing_status > false)
 	    {
-	        //usleep(100); //Switches Off'
 		    HAL_Delay(100);
 	    }
-		//HAL_UART_Transmit(&hlpuart1, (uint8_t*)("No Error"), 100, HAL_MAX_DELAY);
+		HAL_UART_Transmit(&hlpuart1, (uint8_t*)("No Error"), 8, HAL_MAX_DELAY);
 	}
 	return;
 }
@@ -915,12 +910,27 @@ void Autopilot_Interface::set_position(float x, float y, float z, mavlink_set_po
 	sp.z   = z;
 	//sp.r   = r;
 	uint8_t tx_buffer4[sizeof(mavlink_set_position_target_local_ned_t)];
-	//memcpy(tx_buffer4, &sp, sizeof(mavlink_set_position_target_local_ned_t));
     mavlink_msg_set_position_target_local_ned_encode(system_id, companion_id, &msg, &sp);
-	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Current Setpoint:\n"), 100, HAL_MAX_DELAY);
-	//HAL_UART_Transmit(&hlpuart1, tx_buffer4, 100, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Current Setpoint:\n"), 18, HAL_MAX_DELAY);
 	HAL_UART_Transmit(&huart1, tx_buffer4, sizeof(tx_buffer4), HAL_MAX_DELAY);
-	//printf("POSITION SETPOINT XYZ = [ %.4f , %.4f , %.4f ] \n", sp.x, sp.y, sp.z);
+
+	float float_value15 = sp.x;
+	uint8_t tx_buffer15[sizeof(float)];
+	memcpy(tx_buffer15, &float_value15, sizeof(float));
+
+	float float_value16 = sp.y;
+	uint8_t tx_buffer16[sizeof(float)];
+	memcpy(tx_buffer16, &float_value16, sizeof(float));
+
+	float float_value18 = sp.z;
+	uint8_t tx_buffer18[sizeof(float)];
+	memcpy(tx_buffer18, &float_value18, sizeof(float));
+
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("POSITION SETPOINT XYZ:"), 22, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer15, sizeof(float), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer16, sizeof(float), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, tx_buffer18, sizeof(float), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("\n"), 1, HAL_MAX_DELAY);
 }
 //void set_velocity(float vx, float vy, float vz,mavlink_set_position_target_local_ned_t &sp)
 //{
@@ -944,16 +954,16 @@ void Autopilot_Interface::set_yaw(float yaw, mavlink_set_position_target_local_n
 {
 	mavlink_message_t msg;
 	sp.type_mask=sp.type_mask & MAVLINK_MSG_SET_POSITION_TARGET_LOCAL_NED_YAW_ANGLE;
-    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Give yaw:\n"), 100, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&hlpuart1, (uint8_t*)("Give yaw:\n"), 11, HAL_MAX_DELAY);
 //	printf("Give yaw:");
 //	scanf("%f",&yaw);
 	yaw=1;
 	sp.yaw=yaw;
-	uint8_t tx_buffer5[sizeof(mavlink_set_position_target_local_ned_t)];
+	uint8_t tx_buffer19[sizeof(mavlink_set_position_target_local_ned_t)];
 //	memcpy(tx_buffer5, &sp, sizeof(mavlink_set_position_target_local_ned_t));
 	mavlink_msg_set_position_target_local_ned_encode(system_id, companion_id, &msg, &sp);
-	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("POSITION SETPOINT YAW:\n"), 100, HAL_MAX_DELAY);
-	HAL_UART_Transmit(&huart1, tx_buffer5, sizeof(huart1), HAL_MAX_DELAY);
+	HAL_UART_Transmit(&hlpuart1, (uint8_t*)("POSITION SETPOINT YAW:\n"), 23, HAL_MAX_DELAY);
+	HAL_UART_Transmit(&huart1, tx_buffer19, sizeof(huart1), HAL_MAX_DELAY);
 	//printf("POSITION SETPOINT YAW = %.4f\n",sp.yaw);
 }
 
